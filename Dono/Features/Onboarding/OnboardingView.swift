@@ -126,7 +126,7 @@ struct OnboardingPage: View {
 
 // MARK: - Auth View
 struct AuthView: View {
-    @EnvironmentObject var supabase: SupabaseService
+    @Environment(SupabaseService.self) var supabase
     @Environment(\.dismiss) var dismiss
 
     var body: some View {

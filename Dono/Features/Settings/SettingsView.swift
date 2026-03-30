@@ -2,9 +2,9 @@ import SwiftUI
 
 // MARK: - Settings View
 struct SettingsView: View {
-    @EnvironmentObject var supabase: SupabaseService
-    @EnvironmentObject var biometric: BiometricService
-    @EnvironmentObject var bankService: BankDeepLinkService
+    @Environment(SupabaseService.self) var supabase
+    @Environment(BiometricService.self) var biometric
+    @Environment(BankDeepLinkService.self) var bankService
 
     @State private var showBankSelection = false
     @State private var showPremium = false

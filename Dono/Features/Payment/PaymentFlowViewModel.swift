@@ -1,11 +1,12 @@
 import Foundation
 import SwiftUI
+import Observation
 
-@MainActor
-final class PaymentFlowViewModel: ObservableObject {
+@Observable @MainActor
+final class PaymentFlowViewModel {
 
-    @Published var isProcessing = false
-    @Published var error: String?
+    var isProcessing = false
+    var error: String?
 
     // MARK: - Pay with Bank
 

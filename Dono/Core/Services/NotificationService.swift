@@ -5,11 +5,11 @@ import UIKit
 // MARK: - Notification Service
 // Gerencia push notifications locais com ações
 
-final class NotificationService: NSObject, ObservableObject {
+final class NotificationService: NSObject {
 
     static let shared = NotificationService()
 
-    @Published var isAuthorized = false
+    var isAuthorized = false
 
     // MARK: - Notification Categories & Actions
     private let paymentCategoryID = "PAYMENT_REMINDER"

@@ -3,9 +3,9 @@ import SwiftData
 
 @main
 struct DonoApp: App {
-    @StateObject private var supabase = SupabaseService.shared
-    @StateObject private var biometric = BiometricService.shared
-    @StateObject private var bankService = BankDeepLinkService.shared
+    @State private var supabase = SupabaseService.shared
+    @State private var biometric = BiometricService.shared
+    @State private var bankService = BankDeepLinkService.shared
 
     @Environment(\.scenePhase) var scenePhase
 
@@ -29,9 +29,9 @@ struct DonoApp: App {
                         }
                 }
             }
-            .environmentObject(supabase)
-            .environmentObject(biometric)
-            .environmentObject(bankService)
+            .environment(supabase)
+            .environment(biometric)
+            .environment(bankService)
             .preferredColorScheme(.light) // Dono é light-only por design
             .tint(DonoTheme.Colors.accent)
             .onAppear {
@@ -47,7 +47,6 @@ struct DonoApp: App {
                 handleOpenPayment(notification)
             }
         }
-        .modelContainer(for: [Provider.self, Payment.self])
     }
 
     // MARK: - Setup
@@ -119,7 +118,6 @@ struct DonoApp: App {
     private func handlePayNowAction(_ notification: Foundation.Notification) {
         if let paymentId = notification.userInfo?["payment_id"] as? UUID {
             pendingPaymentId = paymentId
-            // A UI vai reagir e iniciar o fluxo de pagamento
         }
     }
 
@@ -132,7 +130,7 @@ struct DonoApp: App {
 
 // MARK: - Lock Screen View
 struct LockScreenView: View {
-    @EnvironmentObject var biometric: BiometricService
+    @Environment(BiometricService.self) var biometric
 
     var body: some View {
         VStack(spacing: DonoTheme.Spacing.xl) {

@@ -4,12 +4,15 @@ import LocalAuthentication
 // MARK: - Biometric Service
 // Gerencia Face ID / Touch ID para proteção do app
 
-final class BiometricService: ObservableObject {
+import Observation
+
+@Observable
+final class BiometricService {
 
     static let shared = BiometricService()
 
-    @Published var isUnlocked = false
-    @Published var biometricType: BiometricType = .none
+    var isUnlocked = false
+    var biometricType: BiometricType = .none
 
     enum BiometricType {
         case faceID, touchID, none

@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Home View (Dashboard Principal)
 struct HomeView: View {
-    @StateObject private var viewModel = HomeViewModel()
-    @EnvironmentObject var bankService: BankDeepLinkService
+    @State private var viewModel = HomeViewModel()
+    @Environment(BankDeepLinkService.self) var bankService
 
     @State private var selectedPayment: Payment?
     @State private var showPaymentFlow = false

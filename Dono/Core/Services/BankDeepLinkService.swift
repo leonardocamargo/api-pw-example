@@ -4,12 +4,15 @@ import UIKit
 // MARK: - Bank Deep Link Service
 // Gerencia a detecção de bancos instalados e abertura via deep link
 
-final class BankDeepLinkService: ObservableObject {
+import Observation
+
+@Observable
+final class BankDeepLinkService {
 
     static let shared = BankDeepLinkService()
 
-    @Published var installedBanks: [BankApp] = []
-    @Published var preferredBank: BankApp?
+    var installedBanks: [BankApp] = []
+    var preferredBank: BankApp?
 
     private init() {
         detectInstalledBanks()

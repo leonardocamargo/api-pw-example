@@ -1,12 +1,13 @@
 import Foundation
 import SwiftUI
+import Observation
 
-@MainActor
-final class HomeViewModel: ObservableObject {
+@Observable @MainActor
+final class HomeViewModel {
 
-    @Published var allPayments: [Payment] = []
-    @Published var providers: [Provider] = []
-    @Published var isLoading = false
+    var allPayments: [Payment] = []
+    var providers: [Provider] = []
+    var isLoading = false
 
     // MARK: - Computed
 

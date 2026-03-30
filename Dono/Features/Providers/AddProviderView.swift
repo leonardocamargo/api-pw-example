@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Add Provider View
 struct AddProviderView: View {
     @Environment(\.dismiss) var dismiss
-    @StateObject private var viewModel = AddProviderViewModel()
+    @State private var viewModel = AddProviderViewModel()
 
     var body: some View {
         NavigationStack {
@@ -254,19 +254,20 @@ struct FrequencyChip: View {
 
 // MARK: - Add Provider ViewModel
 @MainActor
-final class AddProviderViewModel: ObservableObject {
-    @Published var name = ""
-    @Published var category: ProviderCategory = .casa
-    @Published var pixKeyType: PixKeyType = .cpf
-    @Published var pixKey = ""
-    @Published var amount: Double = 0
-    @Published var frequency: PaymentFrequency = .mensal
-    @Published var dueDay: Int = 10
-    @Published var notes = ""
+@Observable @MainActor
+final class AddProviderViewModel {
+    var name = ""
+    var category: ProviderCategory = .casa
+    var pixKeyType: PixKeyType = .cpf
+    var pixKey = ""
+    var amount: Double = 0
+    var frequency: PaymentFrequency = .mensal
+    var dueDay: Int = 10
+    var notes = ""
 
-    @Published var isSaving = false
-    @Published var savedSuccessfully = false
-    @Published var error: String?
+    var isSaving = false
+    var savedSuccessfully = false
+    var error: String?
 
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&

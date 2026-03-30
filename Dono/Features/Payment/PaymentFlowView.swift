@@ -6,8 +6,8 @@ import SwiftUI
 struct PaymentFlowView: View {
     let payment: Payment
 
-    @StateObject private var viewModel = PaymentFlowViewModel()
-    @EnvironmentObject var bankService: BankDeepLinkService
+    @State private var viewModel = PaymentFlowViewModel()
+    @Environment(BankDeepLinkService.self) var bankService
     @Environment(\.dismiss) var dismiss
 
     @State private var showBankPicker = false
@@ -245,7 +245,7 @@ struct PaymentFlowView: View {
 
 // MARK: - Bank Picker
 struct BankPickerView: View {
-    @EnvironmentObject var bankService: BankDeepLinkService
+    @Environment(BankDeepLinkService.self) var bankService
     @Environment(\.dismiss) var dismiss
     let onSelect: (BankApp) -> Void
 

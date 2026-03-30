@@ -1,22 +1,24 @@
 import Foundation
 import Supabase
+import Observation
 
 // MARK: - Supabase Service
 // Gerencia autenticação, CRUD e sync com Supabase
 
-final class SupabaseService: ObservableObject {
+@Observable
+final class SupabaseService {
 
     static let shared = SupabaseService()
 
     // MARK: - Client
     // Substituir pelas suas credenciais do Supabase
     let client = SupabaseClient(
-        supabaseURL: URL(string: "YOUR_SUPABASE_URL")!,
-        supabaseKey: "YOUR_SUPABASE_ANON_KEY"
+        supabaseURL: URL(string: "https://placeholder.supabase.co")!,
+        supabaseKey: "placeholder-anon-key"
     )
 
-    @Published var currentUser: User?
-    @Published var isAuthenticated = false
+    var currentUser: User?
+    var isAuthenticated = false
 
     private init() {}
 

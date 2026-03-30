@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 
 // MARK: - Provider Category
 enum ProviderCategory: String, Codable, CaseIterable, Identifiable {
@@ -121,7 +120,6 @@ enum PaymentFrequency: String, Codable, CaseIterable, Identifiable {
 // MARK: - Provider Model
 import SwiftUI
 
-@Model
 class Provider {
     var id: UUID
     var userId: UUID

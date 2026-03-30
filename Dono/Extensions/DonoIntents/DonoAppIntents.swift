@@ -118,7 +118,7 @@ struct ShowMonthlySummaryIntent: AppIntent {
 
 // MARK: - Spotlight Indexing
 import CoreSpotlight
-import MobileCoreServices
+import UniformTypeIdentifiers
 
 final class SpotlightService {
 

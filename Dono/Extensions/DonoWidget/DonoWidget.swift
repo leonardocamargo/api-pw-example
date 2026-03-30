@@ -75,7 +75,12 @@ struct DonoWidgetProvider: TimelineProvider {
 
     private func loadFromSharedData() -> PaymentWidgetEntry {
         // In production: read from shared UserDefaults or shared SwiftData container
-        return placeholder(in: .init())
+        return PaymentWidgetEntry(
+            date: Date(),
+            payments: [],
+            totalPending: 0,
+            pendingCount: 0
+        )
     }
 }
 

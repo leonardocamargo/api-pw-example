@@ -253,7 +253,6 @@ struct FrequencyChip: View {
 }
 
 // MARK: - Add Provider ViewModel
-@MainActor
 @Observable @MainActor
 final class AddProviderViewModel {
     var name = ""

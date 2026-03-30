@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 import SwiftUI
 
 // MARK: - Payment Status
@@ -47,7 +46,6 @@ enum PaymentStatus: String, Codable, CaseIterable {
 }
 
 // MARK: - Payment Model
-@Model
 class Payment {
     var id: UUID
     var userId: UUID
@@ -60,8 +58,8 @@ class Payment {
     var receiptURL: String?
     var createdAt: Date
 
-    // Transient — não persiste, associado em runtime
-    @Transient var provider: Provider?
+    // Associado em runtime (não persiste)
+    var provider: Provider?
 
     init(
         id: UUID = UUID(),

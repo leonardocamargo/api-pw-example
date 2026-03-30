@@ -75,7 +75,7 @@ struct PayProviderIntent: AppIntent {
             await BankDeepLinkService.shared.openBank(bank)
         }
 
-        return .result(dialog: "Pix de \(provider.defaultAmount.brlFormatted) para \(provider.name) copiado! Abrindo o banco...")
+        return .result(dialog: "Pix de \(formatBRL(provider.defaultAmount)) para \(provider.name) copiado! Abrindo o banco...")
     }
 }
 
@@ -94,7 +94,7 @@ struct ShowPendingPaymentsIntent: AppIntent {
         let total = payments.reduce(0.0) { $0 + $1.amount }
         let names = payments.prefix(3).map { $0.notes ?? "Prestador" }.joined(separator: ", ")
 
-        return .result(dialog: "Você tem \(payments.count) pagamentos pendentes totalizando \(total.brlFormatted). Próximos: \(names).")
+        return .result(dialog: "Você tem \(payments.count) pagamentos pendentes totalizando \(formatBRL(total)). Próximos: \(names).")
     }
 }
 
@@ -112,7 +112,7 @@ struct ShowMonthlySummaryIntent: AppIntent {
         let totalPaid = paid.reduce(0.0) { $0 + $1.amount }
         let totalPending = pending.reduce(0.0) { $0 + $1.amount }
 
-        return .result(dialog: "Este mês: \(totalPaid.brlFormatted) pagos, \(totalPending.brlFormatted) pendentes. \(paid.count) de \(payments.count) pagamentos realizados.")
+        return .result(dialog: "Este mês: \(formatBRL(totalPaid)) pagos, \(formatBRL(totalPending)) pendentes. \(paid.count) de \(payments.count) pagamentos realizados.")
     }
 }
 
@@ -129,7 +129,7 @@ final class SpotlightService {
     func indexProvider(_ provider: ProviderDTO) {
         let attributeSet = CSSearchableItemAttributeSet(contentType: .content)
         attributeSet.title = provider.name
-        attributeSet.contentDescription = "\(provider.category) · \(provider.defaultAmount.brlFormatted) · Dia \(provider.dueDay)"
+        attributeSet.contentDescription = "\(provider.category) · \(formatBRL(provider.defaultAmount)) · Dia \(provider.dueDay)"
         attributeSet.keywords = [provider.name, provider.category, "pix", "pagamento", "dono"]
 
         let item = CSSearchableItem(
@@ -145,7 +145,7 @@ final class SpotlightService {
     func indexPendingPayment(_ payment: PaymentDTO, providerName: String) {
         let attributeSet = CSSearchableItemAttributeSet(contentType: .content)
         attributeSet.title = "Pagar \(providerName)"
-        attributeSet.contentDescription = "\(payment.amount.brlFormatted) · Vence \(payment.dueDate)"
+        attributeSet.contentDescription = "\(formatBRL(payment.amount)) · Vence \(payment.dueDate)"
         attributeSet.keywords = [providerName, "pagar", "pix", "pendente"]
 
         let item = CSSearchableItem(
@@ -162,4 +162,12 @@ final class SpotlightService {
     func removeAll() {
         CSSearchableIndex.default().deleteAllSearchableItems()
     }
+}
+
+// MARK: - Helper (nonisolated para uso em AppIntents)
+private func formatBRL(_ amount: Double) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = Locale(identifier: "pt_BR")
+    return formatter.string(from: NSNumber(value: amount)) ?? "R$ 0,00"
 }

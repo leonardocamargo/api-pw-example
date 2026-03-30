@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, formatBRL } from '../../src/theme';
@@ -12,10 +12,24 @@ export default function ProvidersScreen() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ProviderCategory | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchProviders().then(setProviders).catch(() => setProviders([]));
-  }, []);
+  const loadData = async () => {
+    try {
+      const data = await fetchProviders();
+      setProviders(data);
+    } catch {
+      setProviders([]);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const filtered = providers.filter((p) => {
     if (selectedCategory && p.category !== selectedCategory) return false;
@@ -24,7 +38,12 @@ export default function ProvidersScreen() {
   });
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+    >
       {/* Search */}
       <View style={styles.searchBox}>
         <Ionicons name="search" size={16} color={colors.textTertiary} />
@@ -35,10 +54,15 @@ export default function ProvidersScreen() {
           value={search}
           onChangeText={setSearch}
         />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Category chips */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chips}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chips} contentContainerStyle={{ paddingHorizontal: spacing.md }}>
         <TouchableOpacity
           style={[styles.chip, !selectedCategory && styles.chipActive]}
           onPress={() => setSelectedCategory(null)}
@@ -63,9 +87,7 @@ export default function ProvidersScreen() {
         <EmptyState
           icon="people"
           title="Nenhum prestador"
-          description="Adicione seus prestadores de serviço para começar."
-          actionTitle="Adicionar"
-          onAction={() => router.push('/provider/add')}
+          description="Toque no + para adicionar seu primeiro prestador de servico."
         />
       ) : (
         <View style={styles.list}>
@@ -74,8 +96,9 @@ export default function ProvidersScreen() {
               key={provider.id}
               style={styles.providerRow}
               onPress={() => router.push(`/provider/${provider.id}`)}
+              activeOpacity={0.7}
             >
-              <Avatar name={provider.name} />
+              <Avatar name={provider.name} size={44} />
               <View style={styles.providerInfo}>
                 <Text style={styles.providerName}>{provider.name}</Text>
                 <Text style={styles.providerMeta}>
@@ -84,7 +107,7 @@ export default function ProvidersScreen() {
               </View>
               <View style={styles.providerRight}>
                 <Text style={styles.providerAmount}>{formatBRL(provider.default_amount)}</Text>
-                <Text style={styles.providerFreq}>{provider.frequency}</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.textTertiary} />
               </View>
             </TouchableOpacity>
           ))}
@@ -95,24 +118,26 @@ export default function ProvidersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
+  container: { flex: 1, backgroundColor: colors.background },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     height: 44,
     gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
   searchInput: { flex: 1, fontSize: 16, color: colors.textPrimary },
-  chips: { marginBottom: spacing.lg },
+  chips: { marginBottom: spacing.md },
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     marginRight: spacing.sm,
@@ -120,19 +145,18 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
   chipTextActive: { color: colors.white },
-  list: { gap: 0 },
+  list: { paddingHorizontal: spacing.md },
   providerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm + 4,
+    paddingVertical: spacing.sm + 2,
     gap: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
-  providerInfo: { flex: 1, gap: spacing.xs },
+  providerInfo: { flex: 1, gap: 2 },
   providerName: { fontSize: 16, fontWeight: '500', color: colors.textPrimary },
   providerMeta: { fontSize: 12, color: colors.textSecondary },
-  providerRight: { alignItems: 'flex-end', gap: spacing.xs },
-  providerAmount: { fontSize: 16, fontWeight: '500', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
-  providerFreq: { fontSize: 12, color: colors.textTertiary },
+  providerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  providerAmount: { fontSize: 15, fontWeight: '500', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
 });

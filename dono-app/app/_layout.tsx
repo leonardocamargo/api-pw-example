@@ -15,6 +15,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="payment/[id]" options={{ presentation: 'modal', headerTitle: 'Pagamento' }} />
         <Stack.Screen name="provider/add" options={{ presentation: 'modal', headerTitle: 'Novo Prestador' }} />

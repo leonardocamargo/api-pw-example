@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { colors, spacing, radius, formatBRL } from '../../src/theme';
 import { Payment, PaymentStatus, statusConfig } from '../../src/types';
-import { StatusBadge, EmptyState } from '../../src/components';
+import { fetchPayments } from '../../src/services/supabase';
+import { StatusBadge, EmptyState, Avatar } from '../../src/components';
 
 export default function HistoryScreen() {
+  const router = useRouter();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [filterStatus, setFilterStatus] = useState<PaymentStatus | null>(null);
-  const [payments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const monthLabel = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  const loadData = useCallback(async () => {
+    try {
+      const data = await fetchPayments(currentMonth);
+      setPayments(data);
+    } catch {
+      setPayments([]);
+    }
+  }, [currentMonth]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const filtered = filterStatus ? payments.filter((p) => p.status === filterStatus) : payments;
 
@@ -21,36 +42,44 @@ export default function HistoryScreen() {
   const totalOverdue = payments.filter((p) => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+    >
       {/* Month nav */}
       <View style={styles.monthNav}>
-        <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month - 1, 1))}>
-          <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+        <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month - 1, 1))} style={styles.navButton}>
+          <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{monthLabel}</Text>
-        <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month + 1, 1))}>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month + 1, 1))} style={styles.navButton}>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {/* Summary */}
-      <View style={styles.summary}>
+      <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryLabel, { color: colors.success }]}>Total pago</Text>
+          <View style={[styles.summaryDot, { backgroundColor: colors.success }]} />
+          <Text style={styles.summaryLabel}>Pago</Text>
           <Text style={styles.summaryAmount}>{formatBRL(totalPaid)}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryLabel, { color: colors.warning }]}>Pendente</Text>
+          <View style={[styles.summaryDot, { backgroundColor: colors.warning }]} />
+          <Text style={styles.summaryLabel}>Pendente</Text>
           <Text style={styles.summaryAmount}>{formatBRL(totalPending)}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryLabel, { color: colors.error }]}>Atrasado</Text>
+          <View style={[styles.summaryDot, { backgroundColor: colors.error }]} />
+          <Text style={styles.summaryLabel}>Atrasado</Text>
           <Text style={styles.summaryAmount}>{formatBRL(totalOverdue)}</Text>
         </View>
       </View>
 
       {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={{ paddingHorizontal: spacing.md }}>
         <TouchableOpacity
           style={[styles.chip, !filterStatus && styles.chipActive]}
           onPress={() => setFilterStatus(null)}
@@ -74,20 +103,28 @@ export default function HistoryScreen() {
         <EmptyState
           icon="time"
           title="Sem pagamentos"
-          description="Nenhum pagamento encontrado para este período."
+          description="Nenhum pagamento encontrado para este periodo."
         />
       ) : (
         <View style={styles.list}>
           {filtered.map((payment) => (
-            <View key={payment.id} style={styles.historyRow}>
+            <TouchableOpacity
+              key={payment.id}
+              style={styles.historyRow}
+              onPress={() => router.push(`/payment/${payment.id}`)}
+            >
+              <Avatar name={payment.provider?.name ?? 'P'} size={40} />
               <View style={styles.historyInfo}>
+                <Text style={styles.historyName}>{payment.provider?.name ?? 'Prestador'}</Text>
                 <Text style={styles.historyDate}>
-                  {new Date(payment.due_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+                  {new Date(payment.due_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                 </Text>
               </View>
-              <Text style={styles.historyAmount}>{formatBRL(payment.amount)}</Text>
-              <StatusBadge status={payment.status} />
-            </View>
+              <View style={styles.historyRight}>
+                <Text style={styles.historyAmount}>{formatBRL(payment.amount)}</Text>
+                <StatusBadge status={payment.status} />
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -96,26 +133,46 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
-  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md },
-  monthLabel: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, textTransform: 'capitalize' },
-  summary: {
+  container: { flex: 1, backgroundColor: colors.background },
+  monthNav: {
     flexDirection: 'row',
-    padding: spacing.lg,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  navButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textTransform: 'capitalize',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    marginHorizontal: spacing.md,
+    backgroundColor: colors.white,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    marginBottom: spacing.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   summaryItem: { flex: 1, gap: spacing.xs },
-  summaryLabel: { fontSize: 12, fontWeight: '500' },
-  summaryAmount: { fontSize: 16, fontWeight: '500', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
-  filters: { marginBottom: spacing.lg },
+  summaryDot: { width: 8, height: 8, borderRadius: 4 },
+  summaryLabel: { fontSize: 12, fontWeight: '500', color: colors.textTertiary },
+  summaryAmount: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  filters: { marginBottom: spacing.md },
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     marginRight: spacing.sm,
@@ -123,17 +180,18 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
   chipTextActive: { color: colors.white },
-  list: {},
+  list: { paddingHorizontal: spacing.md },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    gap: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
-  historyInfo: { flex: 1 },
-  historyDate: { fontSize: 16, fontWeight: '500', color: colors.textPrimary },
-  historyAmount: { fontSize: 16, fontWeight: '500', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  historyInfo: { flex: 1, gap: 2 },
+  historyName: { fontSize: 15, fontWeight: '500', color: colors.textPrimary },
+  historyDate: { fontSize: 12, color: colors.textSecondary },
+  historyRight: { alignItems: 'flex-end', gap: spacing.xs },
+  historyAmount: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
 });

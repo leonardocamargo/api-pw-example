@@ -8,7 +8,6 @@ import {
   PaymentFrequency, frequencyConfig,
 } from '../../src/types';
 import { insertProvider } from '../../src/services/supabase';
-import { supabase } from '../../src/services/supabase';
 import { PrimaryButton } from '../../src/components';
 
 export default function AddProviderScreen() {
@@ -29,9 +28,8 @@ export default function AddProviderScreen() {
     if (!isValid) return;
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       await insertProvider({
-        user_id: user?.id ?? '',
+        user_id: '',
         name: name.trim(),
         category,
         pix_key: pixKey.trim(),

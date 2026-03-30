@@ -1,27 +1,40 @@
-import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Provider, Payment } from '../types';
 
 // TODO: Substituir pelas suas credenciais do Supabase
 const SUPABASE_URL = 'https://placeholder.supabase.co';
 const SUPABASE_KEY = 'placeholder-anon-key';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+const IS_CONFIGURED = !SUPABASE_URL.includes('placeholder');
+
+// Only create the real client if configured — avoids AsyncStorage crash in Expo Go
+let supabase: SupabaseClient | null = null;
+
+async function getClient(): Promise<SupabaseClient | null> {
+  if (!IS_CONFIGURED) return null;
+  if (!supabase) {
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+  }
+  return supabase;
+}
 
 // MARK: - Providers
 
 export async function fetchProviders(): Promise<Provider[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const client = await getClient();
+  if (!client) return [];
+  const { data: { user } } = await client.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('providers')
     .select('*')
     .eq('user_id', user.id)
@@ -33,27 +46,35 @@ export async function fetchProviders(): Promise<Provider[]> {
 }
 
 export async function insertProvider(provider: Omit<Provider, 'id' | 'created_at'>): Promise<void> {
-  const { error } = await supabase.from('providers').insert(provider);
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.from('providers').insert(provider);
   if (error) throw error;
 }
 
 export async function updateProvider(id: string, updates: Partial<Provider>): Promise<void> {
-  const { error } = await supabase.from('providers').update(updates).eq('id', id);
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.from('providers').update(updates).eq('id', id);
   if (error) throw error;
 }
 
 export async function deleteProvider(id: string): Promise<void> {
-  const { error } = await supabase.from('providers').update({ is_active: false }).eq('id', id);
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.from('providers').update({ is_active: false }).eq('id', id);
   if (error) throw error;
 }
 
 // MARK: - Payments
 
 export async function fetchPayments(month?: Date): Promise<Payment[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const client = await getClient();
+  if (!client) return [];
+  const { data: { user } } = await client.auth.getUser();
   if (!user) return [];
 
-  let query = supabase
+  let query = client
     .from('payments')
     .select('*, provider:providers(*)')
     .eq('user_id', user.id);
@@ -70,10 +91,12 @@ export async function fetchPayments(month?: Date): Promise<Payment[]> {
 }
 
 export async function fetchPendingPayments(): Promise<Payment[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const client = await getClient();
+  if (!client) return [];
+  const { data: { user } } = await client.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('payments')
     .select('*, provider:providers(*)')
     .eq('user_id', user.id)
@@ -85,7 +108,9 @@ export async function fetchPendingPayments(): Promise<Payment[]> {
 }
 
 export async function markPaymentAsPaid(id: string): Promise<void> {
-  const { error } = await supabase
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client
     .from('payments')
     .update({ status: 'paid', paid_at: new Date().toISOString() })
     .eq('id', id);
@@ -93,7 +118,9 @@ export async function markPaymentAsPaid(id: string): Promise<void> {
 }
 
 export async function markPaymentAsSkipped(id: string): Promise<void> {
-  const { error } = await supabase
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client
     .from('payments')
     .update({ status: 'skipped' })
     .eq('id', id);
@@ -101,6 +128,8 @@ export async function markPaymentAsSkipped(id: string): Promise<void> {
 }
 
 export async function insertPayment(payment: Omit<Payment, 'id' | 'created_at' | 'provider'>): Promise<void> {
-  const { error } = await supabase.from('payments').insert(payment);
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.from('payments').insert(payment);
   if (error) throw error;
 }

@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Dono",
+    "slug": "dono-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "dono",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAFAF8"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dono.app",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "nubank", "itau", "bradesco", "bb",
+          "bancointer", "c6bank", "santander",
+          "picpay", "mercadopago", "caixa",
+          "sicoob", "sicredi"
+        ],
+        "NSFaceIDUsageDescription": "Usamos Face ID para proteger seus dados de pagamento"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAFAF8"
+      },
+      "package": "com.dono.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ]
+    ]
+  }
+}

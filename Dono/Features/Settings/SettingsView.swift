@@ -1,4 +1,5 @@
 import SwiftUI
+import Auth
 
 // MARK: - Settings View
 struct SettingsView: View {
